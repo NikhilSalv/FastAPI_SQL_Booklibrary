@@ -1,29 +1,13 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from uuid import UUID 
-import models
-from database import engine, sessionlocal
-from sqlalchemy.orm import Session
+from uuid import UUID
 
+app = FastAPI()
 
-version = "v1"
-app = FastAPI(
-    title = "Bookly",
-    description = "A REST api app",
-    version = version
-)
-
-models.Base.metadata.create_all(bind=engine)
-
-def get_db():
-    try:
-        db = sessionlocal()
-        yield db
-    finally:
-        db.close()
 
 
 class Book(BaseModel):
+    id: UUID
     title : str = Field(min_length= 1)
     author : str = Field(min_length= 1, max_length = 100)
     description : str = Field(min_length= 1, max_length = 100)
@@ -33,21 +17,14 @@ class Book(BaseModel):
 BOOKS = []
 
 @app.get("/")
-def read_api(db: Session = Depends(get_db)):
-    print(models.Base.metadata.tables.keys())
-    return db.query(models.Books).all()
+def read_api():
+    return BOOKS
 
 @app.post("/")
-def create_book(book: Book,db: Session = Depends(get_db)):
-    book_model = models.Books()
-    book_model.title = book.title
-    book_model.description = book.description
-    book_model.author = book.author
-    book_model.rating = book.rating
-
-    db.add(book_model)
-    db.commit()
-    return book_model.__dict__
+def create_book(book: Book):
+    BOOKS.append(book)
+    print(BOOKS)
+    return book
 
 @app.put("/{book_id}")
 def update_book(book_id: UUID, book: Book):
