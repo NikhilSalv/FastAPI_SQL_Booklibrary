@@ -5,7 +5,13 @@ import models
 from database import engine, sessionlocal
 from sqlalchemy.orm import Session
 
-app = FastAPI()
+
+version = "v1"
+app = FastAPI(
+    title = "Bookly",
+    description = "A REST api app",
+    version = version
+)
 
 models.Base.metadata.create_all(bind=engine)
 
