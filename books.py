@@ -2,13 +2,13 @@ from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 from uuid import UUID
 import models
-from database import engine, sessionlocal
+from database import engine, sessionlocal, user_engine
 from sqlalchemy.orm import Session
 
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
-
+models.Base.metadata.create_all(bind=user_engine)
 
 def get_db():
     try:
@@ -23,6 +23,11 @@ class Book(BaseModel):
     author : str = Field(min_length= 1, max_length = 100)
     description : str = Field(min_length= 1, max_length = 100)
     rating : int = Field(gt= 0, lt = 5)
+
+class User(BaseModel):
+    id: str = Field()
+    username : str = Field()
+    hashed_password : str = Field()
 
 
 @app.get("/")
@@ -76,3 +81,12 @@ def delete_book(book_id: int,db: Session= Depends(get_db)):
     )
     db.query(models.Books).filter(models.Books.id == book_id).delete()
     db.commit()
+
+
+@app.get("/users")
+def read_api(db :  Session = Depends(get_db)):
+    user_list = db.query(models.Users).all()
+    print(type(user_list), "hkfashd")
+    for user in user_list:
+        print(user.__dict__.values())
+    return user_list
